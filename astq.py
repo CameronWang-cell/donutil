@@ -50,7 +50,9 @@ def text(node: tree_sitter.Node or list[tree_sitter.Node] or dict[str: list[tree
 
 
 def debug(instance):
-    print("="*30 + "\n" + text(instance) + "\n" + "-"*30 + "\n")
+    print("="*30 + "\n")
+    print(text(instance))
+    print("\n" + "-"*30 + "\n")
     return instance
 
 
@@ -80,21 +82,26 @@ class By(IntEnum):
     All = 3             # ok
     FuzzyType = 4       # ok
     TypePath = 5
-    SExpression = 6
-    # LeafType = 7
+    SExpression = 6     # ok
+    CodeSnippet = 7
+    # LeafType = 8
 
 # class QRange(IntEnum):
 
 
 class Preprocessing:
     @abstractmethod
-    def preprocess(self, code):
+    def preprocess(self, code: str):
         pass
 
 
 class Raw(Preprocessing):
-    def preprocess(self, code):
+    def preprocess(self, code: str):
         return code
+
+class Norm(Preprocessing):
+    def preprocess(self, code: str):
+        return code.strip()
 
 
 class AST:
@@ -261,6 +268,23 @@ class AST:
                 query = self.lang.query(by_param)
                 return query.captures(self.root_node)
 
+            case By.CodeSnippet:
+                snippet_ast = AST(by_param)
+                snippet_nodes = snippet_ast.query(By.All, layer=1)
+                res = []
+                for snippet_node in snippet_nodes:
+                    for src_node in self.query(By.All):
+                        if src_node.type == snippet_node.type \
+                        and text(src_node).strip() in text(snippet_node).strip():
+                            res.append(src_node)
+                return res
+
+
+
+
+
+
+
 
     def __query_by_type_DFS(self, type_string: str, node: tree_sitter.Node=None, nest=False):
         res = []
@@ -386,6 +410,11 @@ int main() {
     return 0;
 }
     """
+
+    ast = AST(code)
+    node: tree_sitter.Node = ast.query(By.Type, "function_definition")[0]
+    print(node.end_point.row - node.start_point.row)
+
 
 
 

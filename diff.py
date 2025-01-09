@@ -12,6 +12,10 @@ for hunk in diff.hunks:
         line.type
         line.index
         line.line_content
+    for line in hunk.new_lines:
+        line.type
+        line.index
+        line.line_content
 """
 
 
@@ -68,6 +72,8 @@ class Hunk:
         self.content_wo_head = self.__parse_content_wo_head(hunk_content)
         self.old_lines: list[Line] = self.__parse_old_lines(hunk_content)
         self.new_lines: list[Line] = self.__parse_new_lines(hunk_content)
+        self.old_text = self.__parse_old_text()
+        self.new_text = self.__parse_new_text()
 
 
         self.old_start: int = self.head.old_start
@@ -154,6 +160,19 @@ class Hunk:
                 ))
                 new_count += 1
         return lines
+
+    def __parse_old_text(self):
+        text = []
+        for line in self.old_lines:
+            text.append(line.line_content)
+        return "\n".join(text)
+
+    def __parse_new_text(self):
+        text = []
+        for line in self.new_lines:
+            text.append(line.line_content)
+        return "\n".join(text)
+
 
 
     def __str__(self):
