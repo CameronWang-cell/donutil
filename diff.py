@@ -16,6 +16,11 @@ for hunk in diff.hunks:
         line.type
         line.index
         line.line_content
+line = diff.getline(47, "OLD")
+hunk = diff.gethunk(47, "OLD")
+diff.getoldline(47)
+diff.getnewhunk(47)
+print(line)
 """
 
 
@@ -261,9 +266,50 @@ class Diff:
 
     def __str__(self):
         return ("$&"*10+"   DIFF FILE   "+"$&"*10 + "\n"
-                +f"{" "*20}   {str(len(self.heads)): ^3} HUNKS   {" "*20}" + "\n"
+                +f"{' '*20}   {str(len(self.heads)): ^3} HUNKS   {' '*20}" + "\n"
                 +"\n".join([str(line) for line in self.hunks]))
 
+    def gethunk(self, index, oldnew: Literal["OLD", "NEW"]) -> Hunk or None:
+        match oldnew:
+            case "OLD":
+                return self.getoldhunk(index)
+            case "NEW":
+                return self.getnewhunk(index)
+
+    def getoldhunk(self, index) -> Hunk or None:
+        for hunk in self.hunks:
+            if hunk.old_start <= index <= hunk.old_end:
+                return hunk
+
+    def getnewhunk(self, index) -> Hunk or None:
+        for hunk in self.hunks:
+            if hunk.new_start <= index <= hunk.new_end:
+                return hunk
+
+    def getline(self, index: int, oldnew: Literal["OLD", "NEW"]) -> Line or None:
+        match oldnew:
+            case "OLD":
+                return self.getoldline(index)
+
+            case "NEW":
+                return self.getnewline(index)
+
+    def getoldline(self, index) -> Line or None:
+        for hunk in self.hunks:
+            if hunk.old_start <= index <= hunk.old_end:
+                return hunk.old_lines[index - hunk.old_start]
+
+    def getnewline(self, index) -> Line or None:
+        for hunk in self.hunks:
+            if hunk.new_start <= index <= hunk.new_end:
+                return hunk.new_lines[index - hunk.new_start]
 
 
 
+if __name__ == "__main__":
+    diff = Diff.from_file("/Users/wh/Project/hust/SecModel/fanyi_model/CVEfixes_for_slice-main/CWE-18/krb5/CVE-2015-2696/CVE-2015-2696_CWE-18_e04f0283516e80d2f93366e0d479d13c9b5c8c2a_iakerb.c.diff")
+    print(diff)
+    line = diff.getline(47, "OLD")
+    print(line)
+    hunk = diff.gethunk(47, "OLD")
+    print(hunk)

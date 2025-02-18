@@ -132,8 +132,8 @@ class AST:
         match lang:
             case "cpp":
                 import tree_sitter_cpp as tscpp
-                lang = Language(tscpp.language())
-                return Parser(lang), lang
+                CPP_LANGUAGE = Language(tscpp.language())
+                return Parser(CPP_LANGUAGE), CPP_LANGUAGE
             case _:
                 raise NotImplemented
 
@@ -221,7 +221,11 @@ class AST:
               node: tree_sitter.Node=None, nest=False, depth: int = None, layer: int = None, leaf: bool = False):
         """
         范围参数:
-        node, nest, depth, layer, leaf
+        node: 指定节点为根遍历
+        nest: 只返回第一个找到的满足要求的
+        depth: 遍历深度, 如depth=3, 那么123层满足要求的都会找
+        layer: 指定寻找范围在树的某一层, 如layer=2, 只在第二层找满足要求的
+        leaf: 只找满足要求的叶子节点
         leaf, depth, layer只能有一个存在, 互不相容
         条件参数:
         by, by_param
@@ -409,11 +413,23 @@ int main() {
     int a = 0;
     return 0;
 }
+
+template<typename T>
+T add(T a, T b) {
+    return a + b;
+}
     """
 
     ast = AST(code)
     node: tree_sitter.Node = ast.query(By.Type, "function_definition")[0]
     print(node.end_point.row - node.start_point.row)
+    node = ast.query(By.SExpression, """
+    (template_declaration
+        (function_definition) 
+    ) @func_temp
+    """)
+    print(node)
+
 
 
 
